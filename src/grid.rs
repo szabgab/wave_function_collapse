@@ -300,6 +300,13 @@ mod macros {
             vec![$(std::rc::Rc::new(<$tile>::new()),)*]
         };
     }
+    #[cfg(not(feature = "syncsend"))]
+    #[macro_export]
+    macro_rules! create_tiles_expr {
+        ($($tile:expr,)*) => {
+            vec![$(std::rc::Rc::new($tile),)*]
+        };
+    }
     #[cfg(feature = "syncsend")]
     #[macro_export]
     macro_rules! create_tiles_ty {
@@ -308,13 +315,6 @@ mod macros {
         };
     }
     /// Macro for creating tile vector out of expressions
-    #[cfg(not(feature = "syncsend"))]
-    #[macro_export]
-    macro_rules! create_tiles_expr {
-        ($($tile:expr,)*) => {
-            vec![$(std::rc::Rc::new($tile),)*]
-        };
-    }
     #[cfg(feature = "syncsend")]
     #[macro_export]
     macro_rules! create_tiles_expr {
