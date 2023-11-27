@@ -8,7 +8,7 @@
 
 ```rust
 // First create tiles like so
-use wave_function_collapse::prelude::*;
+use wave_func_collapse::prelude::*;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]

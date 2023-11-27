@@ -62,7 +62,7 @@ where
     /**
     Function for changing size of grid built with this type
     ```rust
-    use wave_function_collapse::prelude::GridBuilder;
+    use wave_func_collapse::prelude::GridBuilder;
     let grid_builder = GridBuilder::new().with_size((10, 10));
     ```
     */
@@ -76,7 +76,7 @@ where
     /**
     Function for changing tiles of grid built with this type
     ```rust
-    use wave_function_collapse::prelude::*;
+    use wave_func_collapse::prelude::*;
 
     #[derive(Debug)]
     pub struct Tile1;
@@ -100,7 +100,7 @@ impl GridBuilder<Tiles, Size, UnSealed> {
     /**
     Function for sealing your current configuration of `GridBuilder`
     ```rust
-    use wave_function_collapse::prelude::*;
+    use wave_func_collapse::prelude::*;
 
     #[derive(Debug)]
     pub struct Tile1;
@@ -125,7 +125,7 @@ impl GridBuilder<Tiles, Size, Sealed> {
     /**
     Function for building grid out of `GridBuilder`
     ```rust
-    use wave_function_collapse::prelude::*;
+    use wave_func_collapse::prelude::*;
 
     #[derive(Debug)]
     pub struct Tile1;
@@ -293,17 +293,33 @@ impl Grid<Generated> {
 
 mod macros {
     /// Macro for creating tile vector out of types containing `new` constructor
+    #[cfg(not(feature = "syncsend"))]
     #[macro_export]
     macro_rules! create_tiles_ty {
         ($($tile:ty,)*) => {
             vec![$(std::rc::Rc::new(<$tile>::new()),)*]
         };
     }
+    #[cfg(feature = "syncsend")]
+    #[macro_export]
+    macro_rules! create_tiles_ty {
+        ($($tile:ty,)*) => {
+            vec![$(std::sync::Arc::new(<$tile>::new()),)*]
+        };
+    }
     /// Macro for creating tile vector out of expressions
+    #[cfg(not(feature = "syncsend"))]
     #[macro_export]
     macro_rules! create_tiles_expr {
         ($($tile:expr,)*) => {
             vec![$(std::rc::Rc::new($tile),)*]
+        };
+    }
+    #[cfg(feature = "syncsend")]
+    #[macro_export]
+    macro_rules! create_tiles_expr {
+        ($($tile:expr,)*) => {
+            vec![$(std::sync::Arc::new($tile),)*]
         };
     }
     pub use {create_tiles_expr, create_tiles_ty};

@@ -20,7 +20,7 @@ pub trait Tile: std::fmt::Debug + std::any::Any {
     ```rust
     use std::rc::Rc;
     use std::any::Any;
-    use wave_function_collapse::prelude::*;
+    use wave_func_collapse::prelude::*;
 
     #[derive(Debug)]
     struct SimpleTile;
@@ -38,7 +38,7 @@ pub trait Tile: std::fmt::Debug + std::any::Any {
     ```rust
     use std::rc::Rc;
     use std::any::Any;
-    use wave_function_collapse::prelude::*;
+    use wave_func_collapse::prelude::*;
 
     #[derive(Debug)]
     struct SimpleTile1;
