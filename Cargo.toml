@@ -9,11 +9,14 @@ edition = "2021"
 opt-level = 3
 
 [profile.release]
-debug = true
+opt-level = 3
 codegen-units = 1
 lto = "fat"
 
 [dependencies]
 rand = "0.8.5"
-tikv-jemallocator = "0.5.0"
+tikv-jemallocator = {version="0.5.0",optional=true}
 
+[features]
+default = []
+jemalloc = ["dep:tikv-jemallocator"]
