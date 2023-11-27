@@ -1,5 +1,5 @@
 [package]
-name = "wave_function_collapse"
+name = "wave_func_collapse"
 version = "0.1.0"
 edition = "2021"
 description = "Implementation of wave function collapse algorithm"
