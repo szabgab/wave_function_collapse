@@ -1,0 +1,19 @@
+[package]
+name = "wave_function_collapse"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.test]
+opt-level = 3
+
+[profile.release]
+debug = true
+codegen-units = 1
+lto = "fat"
+
+[dependencies]
+rand = "0.8.5"
+tikv-jemallocator = "0.5.0"
+
