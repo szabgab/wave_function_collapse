@@ -7,6 +7,7 @@ use std::sync::Arc as Rc;
 use crate::rule::Rule;
 
 /// Tile trait
+#[cfg(not(feature = "syncsend"))]
 pub trait Tile: std::fmt::Debug + std::any::Any {
     /**
     Internal method for comparing tiles
@@ -63,6 +64,65 @@ pub trait Tile: std::fmt::Debug + std::any::Any {
         vec![]
     }
 }
+
+#[cfg(feature = "syncsend")]
+pub trait Tile: std::fmt::Debug + std::any::Any + Sync + Send {
+    /**
+    Internal method for comparing tiles
+    */
+    fn type_str(&self) -> &str {
+        std::any::type_name::<Self>()
+    }
+    /**
+    Function for downcasting tile into concrete type
+    ```rust
+    use std::rc::Rc;
+    use std::any::Any;
+    use wave_function_collapse::prelude::*;
+
+    #[derive(Debug)]
+    struct SimpleTile;
+    create_tile_unit!(SimpleTile, SimpleTile,;);
+    let tile: Rc<dyn Tile> = Rc::new(SimpleTile);
+
+    if let Some(concrete) = tile.as_any().downcast_ref::<SimpleTile>() {
+        println!("{concrete:?}");
+    }
+    ```
+    */
+    fn as_any(&self) -> &dyn Any;
+    /**
+    Function for getting rules from a trait object
+    ```rust
+    use std::rc::Rc;
+    use std::any::Any;
+    use wave_function_collapse::prelude::*;
+
+    #[derive(Debug)]
+    struct SimpleTile1;
+    #[derive(Debug)]
+    struct SimpleTile2;
+    create_tile_unit!(SimpleTile1, SimpleTile1, SimpleTile2;);
+    create_tile_unit!(SimpleTile2, SimpleTile2, SimpleTile1;);
+    let tile: Rc<dyn Tile> = Rc::new(SimpleTile1);
+    println!("{:?}", tile.rules())
+
+    ```
+    */
+    fn rules(&self) -> Vec<Rule> {
+        vec![]
+    }
+    /**
+    Same as `rules` but static
+    */
+    fn rules_static() -> Vec<Rule>
+    where
+        Self: Sized,
+    {
+        vec![]
+    }
+}
+
 /// A helper trait
 pub trait Pack: Sized + Tile + 'static {
     fn pack(self) -> Rc<dyn Tile> {
