@@ -1,4 +1,8 @@
-use std::{marker::PhantomData, rc::Rc, slice::Iter};
+#[cfg(not(feature = "syncsend"))]
+use std::rc::Rc;
+#[cfg(feature = "syncsend")]
+use std::sync::Arc as Rc;
+use std::{marker::PhantomData, slice::Iter};
 
 use rand::Rng;
 

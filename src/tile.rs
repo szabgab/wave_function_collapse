@@ -1,4 +1,8 @@
-use std::{any::Any, rc::Rc};
+use std::any::Any;
+#[cfg(not(feature = "syncsend"))]
+use std::rc::Rc;
+#[cfg(feature = "syncsend")]
+use std::sync::Arc as Rc;
 
 use crate::rule::Rule;
 

@@ -1,4 +1,7 @@
+#[cfg(not(feature = "syncsend"))]
 use std::rc::Rc;
+#[cfg(feature = "syncsend")]
+use std::sync::Arc as Rc;
 
 use crate::{prelude::Pack, tile::Tile};
 
