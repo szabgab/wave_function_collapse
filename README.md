@@ -55,4 +55,4 @@ for (id, tile) in grid.iter().enumerate() {
 }
 ```
 
-For more information on how thins work check docs!
+For more information on how thins work check out docs!
