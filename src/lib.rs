@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
@@ -8,6 +10,6 @@ pub mod prelude {
     pub use tile::*;
 }
 
-mod grid;
-mod rule;
-mod tile;
+pub mod grid;
+pub mod rule;
+pub mod tile;

@@ -6,13 +6,17 @@ use crate::prelude::*;
 
 // States
 
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
 pub struct NoTiles;
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone)]
 pub struct Tiles(Vec<Rc<dyn Tile>>);
 
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
 pub struct NoSize;
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Size(usize, usize);
 impl From<(usize, usize)> for Size {
@@ -26,12 +30,14 @@ impl From<Size> for (usize, usize) {
     }
 }
 
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Sealed;
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
 pub struct UnSealed;
 
-// Grid Builder
+/// Builder for `Grid` type utilising `TypeState` pattern
 #[derive(Debug, Default, Clone)]
 pub struct GridBuilder<T, S1, S2> {
     tiles: T,
@@ -39,6 +45,7 @@ pub struct GridBuilder<T, S1, S2> {
     seal_data: PhantomData<S2>,
 }
 impl GridBuilder<NoTiles, NoSize, UnSealed> {
+    /// Only constructor of this type
     pub fn new() -> Self {
         Self::default()
     }
@@ -48,6 +55,13 @@ where
     T: Default,
     S: Default,
 {
+    /**
+    Function for changing size of grid built with this type
+    ```rust
+    use wave_function_collapse::prelude::GridBuilder;
+    let grid_builder = GridBuilder::new().with_size((10, 10));
+    ```
+    */
     pub fn with_size(self, size: (usize, usize)) -> GridBuilder<T, Size, UnSealed> {
         GridBuilder {
             size: size.into(),
@@ -55,6 +69,21 @@ where
             seal_data: PhantomData,
         }
     }
+    /**
+    Function for changing tiles of grid built with this type
+    ```rust
+    use wave_function_collapse::prelude::*;
+
+    #[derive(Debug)]
+    pub struct Tile1;
+    #[derive(Debug)]
+    pub struct Tile2;
+    create_tile_unit!(Tile1, Tile1, Tile2;);
+    create_tile_unit!(Tile2, Tile2, Tile1;);
+
+    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,));
+    ```
+    */
     pub fn with_tiles(self, tiles: Vec<Rc<dyn Tile>>) -> GridBuilder<Tiles, S, UnSealed> {
         GridBuilder {
             tiles: Tiles(tiles),
@@ -62,8 +91,24 @@ where
             seal_data: PhantomData,
         }
     }
+}
+impl GridBuilder<Tiles, Size, UnSealed> {
+    /**
+    Function for sealing your current configuration of `GridBuilder`
+    ```rust
+    use wave_function_collapse::prelude::*;
 
-    pub fn seal(self) -> GridBuilder<T, S, Sealed> {
+    #[derive(Debug)]
+    pub struct Tile1;
+    #[derive(Debug)]
+    pub struct Tile2;
+    create_tile_unit!(Tile1, Tile1, Tile2;);
+    create_tile_unit!(Tile2, Tile2, Tile1;);
+
+    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).seal();
+    ```
+    */
+    pub fn seal(self) -> GridBuilder<Tiles, Size, Sealed> {
         GridBuilder {
             tiles: self.tiles,
             size: self.size,
@@ -73,6 +118,22 @@ where
 }
 
 impl GridBuilder<Tiles, Size, Sealed> {
+    /**
+    Function for building grid out of `GridBuilder`
+    ```rust
+    use wave_function_collapse::prelude::*;
+
+    #[derive(Debug)]
+    pub struct Tile1;
+    #[derive(Debug)]
+    pub struct Tile2;
+    create_tile_unit!(Tile1, Tile1, Tile2;);
+    create_tile_unit!(Tile2, Tile2, Tile1;);
+
+    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).seal();
+    let grid = grid_builder.build();
+    ```
+    */
     pub fn build(&self) -> Grid<NotGenerated> {
         Grid {
             tiles: self.tiles.0.clone(),
@@ -84,12 +145,14 @@ impl GridBuilder<Tiles, Size, Sealed> {
 }
 
 // States
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone)]
 pub struct NotGenerated(Vec<Option<Rc<dyn Tile>>>);
+/// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone)]
 pub struct Generated(Vec<Rc<dyn Tile>>);
 
-// Grid
+/// Type for storing grid data utilising `TypeState pattern`
 #[derive(Default, Clone)]
 #[cfg_attr(test, derive(Debug))]
 pub struct Grid<G> {
@@ -100,6 +163,7 @@ pub struct Grid<G> {
 }
 
 impl Grid<NotGenerated> {
+    /// Function for generating grid
     pub fn gen(mut self) -> Grid<Generated> {
         self.gen_vec();
         self.gen_rules();
@@ -217,22 +281,25 @@ impl Grid<NotGenerated> {
     }
 }
 impl Grid<Generated> {
+    /// Function for iterating over grid
     pub fn iter(&self) -> Iter<'_, Rc<dyn Tile>> {
         self.current_grid.0.iter()
     }
 }
 
 mod macros {
+    /// Macro for creating tile vector out of types containing `new` constructor
     #[macro_export]
     macro_rules! create_tiles_ty {
         ($($tile:ty,)*) => {
-            vec![$(Rc::new(<$tile>::new()),)*]
+            vec![$(std::rc::Rc::new(<$tile>::new()),)*]
         };
     }
+    /// Macro for creating tile vector out of expressions
     #[macro_export]
     macro_rules! create_tiles_expr {
         ($($tile:expr,)*) => {
-            vec![$(Rc::new($tile),)*]
+            vec![$(std::rc::Rc::new($tile),)*]
         };
     }
     pub use {create_tiles_expr, create_tiles_ty};
@@ -241,7 +308,7 @@ mod macros {
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
-    use std::{any::Any, marker::PhantomData, rc::Rc};
+    use std::{marker::PhantomData, rc::Rc};
 
     use crate::create_tile;
 

@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use crate::{prelude::Pack, tile::Tile};
 
-#[derive(Clone)]
-#[cfg_attr(test, derive(Debug))]
+/// Create for storing info about possible adjacent tiles.
+#[derive(Debug, Clone)]
 pub struct Rule {
     pub(crate) second: Rc<dyn Tile>,
 }
@@ -16,6 +16,7 @@ impl PartialEq for Rule {
 impl Eq for Rule {}
 
 impl Rule {
+    /// Contructor function
     pub fn new(second: impl Pack) -> Self {
         Self {
             second: second.pack(),
