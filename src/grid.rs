@@ -2,9 +2,9 @@
 use std::rc::Rc;
 #[cfg(feature = "syncsend")]
 use std::sync::Arc as Rc;
-use std::{marker::PhantomData, slice::Iter};
+use std::{marker::PhantomData, ops::Range, slice::Iter};
 
-use rand::Rng;
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 use crate::prelude::*;
 
@@ -36,6 +36,13 @@ impl From<Size> for (usize, usize) {
 
 /// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
+pub struct Seed(usize);
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct NoSeed;
+
+/// Type for implementation of `TypeState` pattern
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Sealed;
 /// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
@@ -43,21 +50,23 @@ pub struct UnSealed;
 
 /// Builder for `Grid` type utilising `TypeState` pattern
 #[derive(Debug, Default, Clone)]
-pub struct GridBuilder<T, S1, S2> {
+pub struct GridBuilder<T, S1, S2, S3> {
     tiles: T,
     size: S1,
-    seal_data: PhantomData<S2>,
+    seed: S2,
+    seal_data: PhantomData<S3>,
 }
-impl GridBuilder<NoTiles, NoSize, UnSealed> {
+impl GridBuilder<NoTiles, NoSize, NoSeed, UnSealed> {
     /// Only constructor of this type
     pub fn new() -> Self {
         Self::default()
     }
 }
-impl<T, S> GridBuilder<T, S, UnSealed>
+impl<T, S1, S2> GridBuilder<T, S1, S2, UnSealed>
 where
     T: Default,
-    S: Default,
+    S1: Default,
+    S2: Default,
 {
     /**
     Function for changing size of grid built with this type
@@ -66,10 +75,11 @@ where
     let grid_builder = GridBuilder::new().with_size((10, 10));
     ```
     */
-    pub fn with_size(self, size: (usize, usize)) -> GridBuilder<T, Size, UnSealed> {
+    pub fn with_size(self, size: (usize, usize)) -> GridBuilder<T, Size, S2, UnSealed> {
         GridBuilder {
             size: size.into(),
             tiles: self.tiles,
+            seed: self.seed,
             seal_data: PhantomData,
         }
     }
@@ -88,15 +98,24 @@ where
     let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,));
     ```
     */
-    pub fn with_tiles(self, tiles: Vec<Rc<dyn Tile>>) -> GridBuilder<Tiles, S, UnSealed> {
+    pub fn with_tiles(self, tiles: Vec<Rc<dyn Tile>>) -> GridBuilder<Tiles, S1, S2, UnSealed> {
         GridBuilder {
             tiles: Tiles(tiles),
             size: self.size,
+            seed: self.seed,
+            seal_data: PhantomData,
+        }
+    }
+    pub fn with_seed(self, seed: usize) -> GridBuilder<T, S1, Seed, UnSealed> {
+        GridBuilder {
+            tiles: self.tiles,
+            size: self.size,
+            seed: Seed(seed),
             seal_data: PhantomData,
         }
     }
 }
-impl GridBuilder<Tiles, Size, UnSealed> {
+impl GridBuilder<Tiles, Size, Seed, UnSealed> {
     /**
     Function for sealing your current configuration of `GridBuilder`
     ```rust
@@ -109,19 +128,20 @@ impl GridBuilder<Tiles, Size, UnSealed> {
     create_tile_unit!(Tile1, Tile1, Tile2;);
     create_tile_unit!(Tile2, Tile2, Tile1;);
 
-    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).seal();
+    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).with_seed(1).seal();
     ```
     */
-    pub fn seal(self) -> GridBuilder<Tiles, Size, Sealed> {
+    pub fn seal(self) -> GridBuilder<Tiles, Size, Seed, Sealed> {
         GridBuilder {
             tiles: self.tiles,
             size: self.size,
+            seed: self.seed,
             seal_data: PhantomData,
         }
     }
 }
 
-impl GridBuilder<Tiles, Size, Sealed> {
+impl GridBuilder<Tiles, Size, Seed, Sealed> {
     /**
     Function for building grid out of `GridBuilder`
     ```rust
@@ -134,7 +154,7 @@ impl GridBuilder<Tiles, Size, Sealed> {
     create_tile_unit!(Tile1, Tile1, Tile2;);
     create_tile_unit!(Tile2, Tile2, Tile1;);
 
-    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).seal();
+    let grid_builder = GridBuilder::new().with_tiles(create_tiles_expr!(Tile1, Tile2,)).with_size((10, 10)).with_seed(1).seal();
     let grid = grid_builder.build();
     ```
     */
@@ -143,6 +163,7 @@ impl GridBuilder<Tiles, Size, Sealed> {
             tiles: self.tiles.0.clone(),
             current_grid: NotGenerated(Vec::new()),
             size: self.size.into(),
+            rng: rand::prelude::StdRng::seed_from_u64(self.seed.0 as _),
             rules: Vec::new(),
         }
     }
@@ -157,13 +178,14 @@ pub struct NotGenerated(Vec<Option<Rc<dyn Tile>>>);
 pub struct Generated(Vec<Rc<dyn Tile>>);
 
 /// Type for storing grid data utilising `TypeState pattern`
-#[derive(Default, Clone)]
+#[derive(Clone)]
 #[cfg_attr(test, derive(Debug))]
 pub struct Grid<G> {
     tiles: Vec<Rc<dyn Tile>>,
     current_grid: G, //Vec<Option<Rc<dyn Tile>>>,
     size: (usize, usize),
     rules: Vec<Rule>,
+    rng: StdRng,
 }
 
 impl Grid<NotGenerated> {
@@ -184,6 +206,7 @@ impl Grid<NotGenerated> {
                     .collect(),
             ),
             size: self.size,
+            rng: self.rng,
             rules: self.rules,
         }
     }
@@ -200,7 +223,7 @@ impl Grid<NotGenerated> {
         if low_entropy.1 == usize::MAX {
             return true;
         }
-        let tile = low_entropy.2[rand::thread_rng().gen_range(0..low_entropy.1)]
+        let tile = low_entropy.2[self.gen_rand(0..low_entropy.1)]
             .second
             .clone();
         self.current_grid.0[low_entropy.0] = Some(tile);
@@ -279,9 +302,13 @@ impl Grid<NotGenerated> {
         self.rules = buf;
     }
     fn start_gen(&mut self) {
-        let tile = &self.tiles[rand::thread_rng().gen_range(0..self.tiles.len())];
-        let tile_index = rand::thread_rng().gen_range(0..(self.size.0 * self.size.1));
-        self.current_grid.0[tile_index] = Some(tile.clone());
+        let rand = self.gen_rand(0..self.tiles.len());
+        let tile = self.tiles[rand].clone();
+        let tile_index = self.gen_rand(0..(self.size.0 * self.size.1));
+        self.current_grid.0[tile_index] = Some(tile);
+    }
+    fn gen_rand(&mut self, range: Range<usize>) -> usize {
+        self.rng.gen_range(range)
     }
 }
 impl Grid<Generated> {
@@ -368,7 +395,11 @@ mod tests {
             SimpleTile<Land>,
             SimpleTile<Mountains>,
         );
-        let grid_builder = GridBuilder::new().with_size(size).with_tiles(tiles).seal();
+        let grid_builder = GridBuilder::new()
+            .with_size(size)
+            .with_tiles(tiles)
+            .with_seed(213)
+            .seal();
         let grid = grid_builder.build().gen();
 
         for (id, tile) in grid.iter().enumerate() {

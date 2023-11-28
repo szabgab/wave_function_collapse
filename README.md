@@ -32,7 +32,8 @@ let tiles: Vec<Rc<dyn Tile>> = create_tiles_expr!(
   Beach,
   Land,
 );
-let grid_builder = GridBuilder::new().with_size(size).with_tiles(tiles).seal();
+let seed = 123;
+let grid_builder = GridBuilder::new().with_size(size).with_tiles(tiles).with_seed(seed).seal();
 
 // One thing to note is that you need to specify type for variable that holds your tiles.
 // Create simple grid
