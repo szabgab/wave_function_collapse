@@ -36,7 +36,7 @@ impl From<Size> for (usize, usize) {
 
 /// Type for implementation of `TypeState` pattern
 #[derive(Default, Debug, Clone, Copy)]
-pub struct Seed(usize);
+pub struct Seed(u64);
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct NoSeed;
@@ -106,7 +106,7 @@ where
             seal_data: PhantomData,
         }
     }
-    pub fn with_seed(self, seed: usize) -> GridBuilder<T, S1, Seed, UnSealed> {
+    pub fn with_seed(self, seed: u64) -> GridBuilder<T, S1, Seed, UnSealed> {
         GridBuilder {
             tiles: self.tiles,
             size: self.size,
