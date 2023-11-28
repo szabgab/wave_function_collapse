@@ -354,7 +354,7 @@ mod macros {
             vec![$(std::sync::Arc::new($tile),)*]
         };
     }
-    pub use {create_tiles_expr, create_tiles_ty};
+    
 }
 
 #[cfg(test)]
@@ -411,13 +411,13 @@ mod tests {
             if id % size.0 == 0 {
                 println!();
             }
-            if let Some(_) = tile.as_any().downcast_ref::<SimpleTile<Land>>() {
+            if tile.as_any().downcast_ref::<SimpleTile<Land>>().is_some() {
                 print!("L");
-            } else if let Some(_) = tile.as_any().downcast_ref::<SimpleTile<Water>>() {
+            } else if tile.as_any().downcast_ref::<SimpleTile<Water>>().is_some() {
                 print!("W");
-            } else if let Some(_) = tile.as_any().downcast_ref::<SimpleTile<Beach>>() {
+            } else if tile.as_any().downcast_ref::<SimpleTile<Beach>>().is_some() {
                 print!("B");
-            } else if let Some(_) = tile.as_any().downcast_ref::<SimpleTile<Mountains>>() {
+            } else if tile.as_any().downcast_ref::<SimpleTile<Mountains>>().is_some() {
                 print!("M");
             }
         }
