@@ -188,6 +188,11 @@ pub struct Grid<G> {
     rng: StdRng,
 }
 
+#[cfg(feature = "syncsend")]
+unsafe impl<G> Sync for Grid<G> {}
+#[cfg(feature = "syncsend")]
+unsafe impl<G> Send for Grid<G> {}
+
 impl Grid<NotGenerated> {
     /// Function for generating grid
     pub fn gen(mut self) -> Grid<Generated> {
