@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Implementation of wave function collapse algorithm"
 license-file = "LICENSE"
-repository = "https://gihtub.com/HumanEntity/wave_function_collapse"
+repository = "https://github.com/HumanEntity/wave_function_collapse"
 documentation = "https://docs.rs/wave_func_collapse/latest/wave_func_collapse/"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
